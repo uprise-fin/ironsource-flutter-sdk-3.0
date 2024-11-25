@@ -31,6 +31,7 @@ import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -45,7 +46,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
   ///
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
-  private var channel: MethodChannel? = null
+  private lateinit var channel: MethodChannel
   private var activity: Activity? = null
   private var context: Context? = null
 
@@ -67,18 +68,24 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
   // LevelPlay Native Ad
   private var nativeAdViewFactories = hashMapOf<String, PlatformViewFactory>()
   private var pluginBinding: FlutterPluginBinding? = null
+  private var binaryMessenger: BinaryMessenger? = null;
 
   // LevelPlay Ad Object Manager
   private lateinit var levelPlayAdObjectManager: LevelPlayAdObjectManager
 
+  fun init() {
+    Log.d("IronSourceMediation", "init: Thread: ${Thread.currentThread().getName()} ${pluginBinding.toString()}")
+    channel = MethodChannel(binaryMessenger!!, "ironsource_mediation")
+    channel.setMethodCallHandler(this)
+    initListeners()
+    levelPlayAdObjectManager = LevelPlayAdObjectManager(activity, channel)
+  }
+
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "ironsource_mediation")
     Log.d("IronSourceMediation", "onAttachedToEngine: Thread: ${Thread.currentThread().getName()} ${pluginBinding.toString()}")
     context = flutterPluginBinding.applicationContext
     pluginBinding = flutterPluginBinding
-
-    channel?.setMethodCallHandler(this)
-    initListeners()
+    binaryMessenger = flutterPluginBinding.binaryMessenger
 
     // Banner ad view registry
     val bannerAdViewFactory = LevelPlayBannerAdViewFactory(pluginBinding!!.binaryMessenger)
@@ -89,16 +96,16 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
     // Native ad view registry
     val nativeAdViewFactory = LevelPlayNativeAdViewFactoryTemplate(pluginBinding!!.binaryMessenger)
     addNativeAdViewFactory("levelPlayNativeAdView", nativeAdViewFactory)
-
-    // Ad object manager registry
-    levelPlayAdObjectManager = LevelPlayAdObjectManager(activity, channel!!)
   }
 
   override fun onDetachedFromEngine(binding: FlutterPluginBinding) {
-    channel?.setMethodCallHandler(null)
-    channel = null
-    detachListeners()
     Log.d("IronSourceMediation", "onDetachedFromEngine: Thread: ${Thread.currentThread().getName()}")
+    if (::channel.isInitialized) {
+      channel?.setMethodCallHandler(null)
+      detachListeners()
+    }
+    binaryMessenger = null;
+    context = null;
   }
 
   /**
@@ -967,6 +974,9 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     Log.d("IronSourceMediation", "onAttachedToActivity: Thread: ${Thread.currentThread().getName()} ${activity.toString()}")
     activity = binding.activity
+    if(!::channel.isInitialized) {
+      init()
+    }
     levelPlayAdObjectManager.activity = binding.activity
     if (activity is FlutterActivity)
     {

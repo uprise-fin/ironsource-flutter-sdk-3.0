@@ -73,6 +73,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
 
   override fun onAttachedToEngine(flutterPluginBinding: FlutterPluginBinding) {
     channel = MethodChannel(flutterPluginBinding.binaryMessenger, "ironsource_mediation")
+    Log.d("IronSourceMediation", "onAttachedToEngine: Thread: ${Thread.currentThread().getName()} ${pluginBinding.toString()}")
     context = flutterPluginBinding.applicationContext
     pluginBinding = flutterPluginBinding
 
@@ -97,12 +98,14 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
     channel?.setMethodCallHandler(null)
     channel = null
     detachListeners()
+    Log.d("IronSourceMediation", "onDetachedFromEngine: Thread: ${Thread.currentThread().getName()}")
   }
 
   /**
    * Instantiate and set listeners
    */
   private fun initListeners() {
+    Log.d("IronSourceMediation", "initListeners")
     channel?.let { channel->
       // ImpressionData Listener
       if (mImpressionDataListener == null) {
@@ -138,6 +141,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
    * Listener Reference Clean Up
    */
   private fun detachListeners() {
+    Log.d("IronSourceMediation", "detachListeners")
     // ILR
     mImpressionDataListener?.let { IronSource.removeImpressionDataListener(it) }
     mImpressionDataListener = null
@@ -961,6 +965,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
 
   /** region ActivityAware =======================================================================*/
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+    Log.d("IronSourceMediation", "onAttachedToActivity: Thread: ${Thread.currentThread().getName()} ${activity.toString()}")
     activity = binding.activity
     levelPlayAdObjectManager.activity = binding.activity
     if (activity is FlutterActivity)
@@ -974,6 +979,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
   }
 
   override fun onDetachedFromActivityForConfigChanges() {
+    Log.d("IronSourceMediation", "onDetachedFromActivity: Thread: ${Thread.currentThread().getName()}")
     if (activity is FlutterActivity)
     {
       (activity as FlutterActivity).lifecycle.removeObserver(this)
@@ -987,6 +993,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
   }
 
   override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+    Log.d("IronSourceMediation", "onReattachedToActivity: Thread: ${Thread.currentThread().getName()}")
     if (activity is FlutterActivity)
     {
       activity = binding.activity as FlutterActivity
@@ -1000,6 +1007,7 @@ class IronSourceMediationPlugin : FlutterPlugin, MethodCallHandler, ActivityAwar
     levelPlayAdObjectManager.activity = activity
   }
   override fun onDetachedFromActivity() {
+    Log.d("IronSourceMediation", "onDetachedFromActivity: Thread: ${Thread.currentThread().getName()}")
     if (activity is FlutterActivity)
     {
       (activity as FlutterActivity).lifecycle.removeObserver(this)

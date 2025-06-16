@@ -1,6 +1,6 @@
 # ironSource Flutter Plugin
 
-A bridge plugin for ironSource SDKs.
+A bridge plugin for ironSource SDKs..
 
 - [ironSource Knowledge Center](https://developers.is.com/)
 - [Android SDK](https://developers.ironsrc.com/ironsource-mobile/android/android-sdk/)
